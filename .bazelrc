@@ -1,0 +1,14 @@
+# Default java flags, use JDK21 to get a headstart on 2512, would need to revert to JDK17 if we release java artifacts in FY24
+common --java_language_version=17
+common --java_runtime_version=remotejdk_17
+common --tool_java_language_version=17
+common --tool_java_runtime_version=remotejdk_17
+
+startup --noautodetect_server_javabase
+# Point tools such as coursier (used in rules_jvm_external) to Bazel's internal JDK
+# suggested in https://github.com/bazelbuild/rules_jvm_external/issues/445
+common --repo_env=JAVA_HOME=../bazel_tools/jdk
+common --action_env=JAVA_HOME=../bazel_tools/jdk
+
+# This option is required for rules_jvm_external to pull artifacts that are named with ${osgi.platform}
+common:with_coursier_opts --repo_env="COURSIER_OPTS=--pom-property osgi.platform=win32.win32.x86_64"

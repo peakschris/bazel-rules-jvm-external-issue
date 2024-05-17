@@ -1,0 +1,70 @@
+# force these implicit deps to specific versions
+bazel_dep(name = "protobuf", version = "26.0")
+
+#################################################################
+# Rules jvm_external (Maven/Bazel)
+#################################################################
+bazel_dep(name = "rules_jvm_external", version = "6.1")
+
+# Uncomment this in order to use COURSIER_OPTS patch
+# Once patched, add --config=with_coursier_opts
+archive_override(
+    module_name = "rules_jvm_external",
+    urls = ["https://github.com/bazelbuild/rules_jvm_external/releases/download/6.1/rules_jvm_external-6.1.tar.gz"],
+    strip_prefix = "rules_jvm_external-6.1",
+    integrity = "sha256-COqSHfAv/pkkEjsGhtwE/Q/4dXEL+tt61CutuTGw/VA=",
+    patches = [
+        "//patches:rules_jvm_external.patch",
+    ],
+)
+
+# Name the repo mavenx to avoid conflicts with protobuf
+maven = use_extension("@rules_jvm_external//:extensions.bzl", "maven")
+
+# Use verbose declaration syntax in order to break cyclic dependency between two modules
+# More explanation here: https://github.com/bazelbuild/rules_jvm_external/issues/966
+# This only works with a lockfile. The issue will still appear in non-lockfile mode
+maven.artifact(
+    artifact = "org.eclipse.swt.win32.win32.x86_64",
+    exclusions = [
+        "org.eclipse.platform:org.eclipse.swt",
+    ],
+    group = "org.eclipse.platform",
+    version = "3.121.0",
+)
+
+maven.artifact(
+    artifact = "org.eclipse.swt",
+    exclusions = [
+        "org.eclipse.platform:org.eclipse.swt.win32.win32.x86_64",
+    ],
+    group = "org.eclipse.platform",
+    version = "3.121.0",
+)
+
+maven.install(
+    name = "maven",
+    artifacts = [
+        "org.eclipse.platform:org.eclipse.ui.views:3.9.400",
+    ],
+    fail_on_missing_checksum = False,
+    strict_visibility = True,
+    generate_compat_repositories = False,
+    fail_if_repin_required = True,
+    lock_file = "//:maven_install.json",
+    # use the exact versions for any artifacts explicltly specified above
+    version_conflict_policy = "pinned",
+)
+
+use_repo(
+    maven,
+    "maven",
+    "unpinned_maven",
+)
+
+#################################################################
+# Aspect lib has improved binary generation rules & utils.
+#################################################################
+#bazel_dep(name = "aspect_bazel_lib", version = "2.7.3")
+
+

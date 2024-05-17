@@ -1,0 +1,36 @@
+diff --git coursier.bzl coursier.bzl
+index a71507a..e8b93bb 100644
+--- coursier.bzl
++++ coursier.bzl
+@@ -239,18 +239,16 @@ def _java_path(repository_ctx):
+ # Generate the base `coursier` command depending on the OS, JAVA_HOME or the
+ # location of `java`.
+ def _generate_java_jar_command(repository_ctx, jar_path):
+-    coursier_opts = repository_ctx.os.environ.get("COURSIER_OPTS", "")
+-    coursier_opts = coursier_opts.split(" ") if len(coursier_opts) > 0 else []
+     java_path = _java_path(repository_ctx)
+ 
+     if java_path != None:
+         # https://github.com/coursier/coursier/blob/master/doc/FORMER-README.md#how-can-the-launcher-be-run-on-windows-or-manually-with-the-java-program
+         # The -noverify option seems to be required after the proguarding step
+         # of the main JAR of coursier.
+-        cmd = [java_path, "-noverify", "-jar"] + coursier_opts + _get_java_proxy_args(repository_ctx) + [jar_path]
++        cmd = [java_path, "-noverify"] + ["-jar"] + _get_java_proxy_args(repository_ctx) + [jar_path]
+     else:
+         # Try to execute coursier directly
+-        cmd = [jar_path] + coursier_opts + ["-J%s" % arg for arg in _get_java_proxy_args(repository_ctx)]
++        cmd = [jar_path] + ["-J%s" % arg for arg in _get_java_proxy_args(repository_ctx)]
+ 
+     return cmd
+ 
+@@ -705,6 +703,10 @@ def make_coursier_dep_tree(
+         # https://github.com/coursier/coursier/blob/1cbbf39b88ee88944a8d892789680cdb15be4714/modules/paths/src/main/java/coursier/paths/CoursierPaths.java#L29-L56
+         environment = {"COURSIER_CACHE": str(repository_ctx.path(coursier_cache_location))}
+ 
++    coursier_opts = repository_ctx.os.environ.get("COURSIER_OPTS", "")
++    coursier_opts = coursier_opts.split(" ") if len(coursier_opts) > 0 else []
++    cmd.extend(coursier_opts)
++
+     # If we are using Java 9 or higher we can use an argsfile to avoid command line length limits
+     java_path = _java_path(repository_ctx)
+     if java_path:

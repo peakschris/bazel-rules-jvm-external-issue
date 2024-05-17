@@ -1,0 +1,7 @@
+java_library(
+    name = "foo",
+    srcs = ["foo.java"],
+    deps = [
+        "@maven//:org_eclipse_platform_org_eclipse_swt_win32_win32_x86_64",
+    ],
+)
